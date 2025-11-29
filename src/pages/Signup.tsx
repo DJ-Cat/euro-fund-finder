@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +8,11 @@ import { toast } from "sonner";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const redirectPath = searchParams.get("redirect") || "/onboarding";
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +27,7 @@ const Signup = () => {
       if (error) throw error;
 
       toast.success("Account created successfully!");
-      navigate("/onboarding");
+      navigate(redirectPath);
     } catch (error: any) {
       toast.error(error.message || "Failed to sign up");
     } finally {
