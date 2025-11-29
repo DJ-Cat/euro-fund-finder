@@ -13,7 +13,7 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-black tracking-tight">FUNDING MATCHER</h1>
-            <Button variant="outline" className="border-2 border-foreground font-semibold">
+            <Button variant="outline" className="border-2 border-foreground font-semibold" onClick={() => navigate("/login")}>
               Sign In
             </Button>
           </div>
@@ -34,7 +34,7 @@ const Home = () => {
             <Button
               size="lg"
               className="text-lg px-8 py-6 font-bold tracking-wide"
-              onClick={() => navigate("/onboarding")}
+              onClick={() => navigate("/signup")}
             >
               Get Matched Now
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -80,7 +80,7 @@ const Home = () => {
             size="lg"
             variant="secondary"
             className="text-lg px-8 py-6 font-bold border-2 border-foreground"
-            onClick={() => navigate("/onboarding")}
+            onClick={() => navigate("/signup")}
           >
             Start Matching Process
             <ArrowRight className="ml-2 h-5 w-5" />

@@ -1,87 +1,77 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Building2, LogOut, Settings } from "lucide-react";
-import InvestorCard from "@/components/InvestorCard";
+import GrantCard from "@/components/GrantCard";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface Investor {
-  id: number;
-  name: string;
-  fitScore: number;
-  ticketSize: string;
-  industries: string[];
-  stage: string[];
-  description: string;
+interface Grant {
+  id: string;
+  title: string;
+  description: string | null;
+  funding_body: string | null;
+  amount_min: number | null;
+  amount_max: number | null;
+  deadline: string | null;
+  tags: string[] | null;
+  application_url: string | null;
 }
-
-const mockInvestors: Investor[] = [
-  {
-    id: 1,
-    name: "Sequoia Capital Europe",
-    fitScore: 98,
-    ticketSize: "€500k - €5M",
-    industries: ["Fintech", "SaaS", "Enterprise"],
-    stage: ["Seed", "Series A"],
-    description: "Leading venture capital firm focused on early-stage technology companies across Europe.",
-  },
-  {
-    id: 2,
-    name: "Index Ventures",
-    fitScore: 95,
-    ticketSize: "€1M - €10M",
-    industries: ["SaaS", "Marketplace", "Fintech"],
-    stage: ["Seed", "Series A", "Series B"],
-    description: "Multi-stage venture capital firm with offices in London, Geneva, and San Francisco.",
-  },
-  {
-    id: 3,
-    name: "Accel Partners",
-    fitScore: 92,
-    ticketSize: "€2M - €15M",
-    industries: ["SaaS", "Enterprise", "Infrastructure"],
-    stage: ["Series A", "Series B"],
-    description: "Global venture capital firm investing in exceptional founders and breakthrough ideas.",
-  },
-  {
-    id: 4,
-    name: "Atomico",
-    fitScore: 89,
-    ticketSize: "€500k - €8M",
-    industries: ["Fintech", "Health", "Cleantech"],
-    stage: ["Seed", "Series A"],
-    description: "European venture capital firm backing bold founders using technology for good.",
-  },
-  {
-    id: 5,
-    name: "Balderton Capital",
-    fitScore: 87,
-    ticketSize: "€1M - €20M",
-    industries: ["SaaS", "Marketplace", "Fintech"],
-    stage: ["Seed", "Series A", "Series B"],
-    description: "One of Europe's leading early-stage venture capital firms, based in London.",
-  },
-  {
-    id: 6,
-    name: "Northzone",
-    fitScore: 84,
-    ticketSize: "€500k - €5M",
-    industries: ["SaaS", "Fintech", "E-commerce"],
-    stage: ["Seed", "Series A"],
-    description: "Early-stage venture capital firm with a 25-year track record in Europe.",
-  },
-];
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [companyName, setCompanyName] = useState("Your Startup");
+  const [grants, setGrants] = useState<Grant[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+      fetchGrants(user.id);
+    };
+
     const storedData = sessionStorage.getItem("startupData");
     if (storedData) {
       const data = JSON.parse(storedData);
       setCompanyName(data.companyName || "Your Startup");
     }
-  }, []);
+
+    checkAuth();
+  }, [navigate]);
+
+  const fetchGrants = async (userId: string) => {
+    try {
+      // Get user profile to get TRL level
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("trl_level")
+        .eq("id", userId)
+        .single();
+
+      // Fetch all grants (we can add filtering later based on TRL)
+      const { data, error } = await supabase
+        .from("public_grants")
+        .select("*")
+        .order("deadline", { ascending: true, nullsFirst: false });
+
+      if (error) throw error;
+      setGrants(data || []);
+    } catch (error: any) {
+      toast.error("Failed to load grants");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,7 +100,7 @@ const Dashboard = () => {
           <Button
             variant="outline"
             className="w-full justify-start font-semibold border-2 border-foreground h-12"
-            onClick={() => navigate("/")}
+            onClick={handleLogout}
           >
             <LogOut className="mr-3 h-5 w-5" />
             Logout
@@ -124,16 +114,26 @@ const Dashboard = () => {
         <div className="mb-12 border-b-2 border-foreground pb-8">
           <h1 className="text-5xl font-black mb-3 tracking-tight">{companyName}</h1>
           <p className="text-xl text-muted-foreground font-semibold">
-            Your Investor Matches
+            Available Grants & Funding Opportunities
           </p>
         </div>
 
-        {/* Investor Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {mockInvestors.map((investor) => (
-            <InvestorCard key={investor.id} investor={investor} />
-          ))}
-        </div>
+        {/* Grant Cards Grid */}
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-lg font-semibold text-muted-foreground">Loading grants...</p>
+          </div>
+        ) : grants.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-lg font-semibold text-muted-foreground">No grants available at the moment.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {grants.map((grant) => (
+              <GrantCard key={grant.id} grant={grant} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
