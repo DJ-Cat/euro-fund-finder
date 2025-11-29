@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          funding_needs: string | null
+          id: string
+          location: string | null
+          startup_stage: string | null
+          trl_level: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          funding_needs?: string | null
+          id: string
+          location?: string | null
+          startup_stage?: string | null
+          trl_level?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          funding_needs?: string | null
+          id?: string
+          location?: string | null
+          startup_stage?: string | null
+          trl_level?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      public_grants: {
+        Row: {
+          amount_max: number | null
+          amount_min: number | null
+          application_url: string | null
+          created_at: string | null
+          deadline: string | null
+          description: string | null
+          eligible_countries: string[] | null
+          funding_body: string | null
+          id: string
+          max_trl: number | null
+          min_trl: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount_max?: number | null
+          amount_min?: number | null
+          application_url?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          eligible_countries?: string[] | null
+          funding_body?: string | null
+          id?: string
+          max_trl?: number | null
+          min_trl?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount_max?: number | null
+          amount_min?: number | null
+          application_url?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          eligible_countries?: string[] | null
+          funding_body?: string | null
+          id?: string
+          max_trl?: number | null
+          min_trl?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
