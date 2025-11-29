@@ -28,15 +28,15 @@ const Home = () => {
               Find the right funding for your startup.
             </h2>
             <p className="text-xl text-muted-foreground mb-10 leading-relaxed">
-              Connect with European investors that match your industry, stage, and funding needs.
-              Powered by data-driven matching algorithms.
+              Explore hundreds of European grants and funding opportunities. 
+              Browse now, sign up when you're ready.
             </p>
             <Button
               size="lg"
               className="text-lg px-8 py-6 font-bold tracking-wide"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/explore")}
             >
-              Get Matched Now
+              Explore Grants
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
@@ -74,15 +74,15 @@ const Home = () => {
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-6 py-24">
         <div className="border-2 border-foreground p-16 text-center bg-primary text-primary-foreground">
-          <h2 className="text-5xl font-black mb-6 tracking-tight">Ready to find your investors?</h2>
-          <p className="text-xl mb-10 opacity-90">Takes less than 5 minutes to complete your profile</p>
+          <h2 className="text-5xl font-black mb-6 tracking-tight">Ready to get personalized matches?</h2>
+          <p className="text-xl mb-10 opacity-90">Sign up to unlock smart matching based on your profile</p>
           <Button
             size="lg"
             variant="secondary"
             className="text-lg px-8 py-6 font-bold border-2 border-foreground"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/explore")}
           >
-            Start Matching Process
+            Browse All Grants
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>

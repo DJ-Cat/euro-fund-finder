@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface GrantCardProps {
   grant: {
@@ -19,6 +21,8 @@ interface GrantCardProps {
 }
 
 const GrantCard = ({ grant }: GrantCardProps) => {
+  const navigate = useNavigate();
+
   const formatAmount = (min: number | null, max: number | null) => {
     if (!min && !max) return "Amount varies";
     if (!max) return `From €${(min! / 1000).toFixed(0)}k`;
@@ -32,7 +36,19 @@ const GrantCard = ({ grant }: GrantCardProps) => {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      // Redirect to signup with current path as redirect param
+      const currentPath = window.location.pathname;
+      navigate(`/signup?redirect=${encodeURIComponent(currentPath)}`);
+      toast.info("Please sign up to apply for grants");
+      return;
+    }
+
+    // User is authenticated, proceed with application
     if (grant.application_url) {
       window.open(grant.application_url, "_blank");
     } else {
