@@ -12,6 +12,7 @@ import {
 import { ArrowRight, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const Onboarding = () => {
     fundingAsk: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.companyName || !formData.industry || !formData.stage || !formData.businessModel || !formData.fundingAsk) {
@@ -32,11 +33,34 @@ const Onboarding = () => {
       return;
     }
 
-    // Store form data in sessionStorage for the dashboard
-    sessionStorage.setItem("startupData", JSON.stringify(formData));
-    
-    toast.success("Profile submitted successfully!");
-    navigate("/dashboard");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const trlLevel = formData.stage === "pre-seed" ? 1 : 
+                       formData.stage === "seed" ? 3 :
+                       formData.stage === "series-a" ? 5 : 7;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          startup_stage: formData.stage,
+          trl_level: trlLevel,
+          funding_needs: formData.fundingAsk,
+          location: "Global",
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      // Store form data in sessionStorage for display
+      sessionStorage.setItem("startupData", JSON.stringify(formData));
+      
+      toast.success("Profile submitted successfully!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save profile");
+    }
   };
 
   return (
