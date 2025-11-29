@@ -20,11 +20,33 @@ const GrantMatchesDashboard = () => {
 
   const fetchMatchingGrants = async () => {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setGrants([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch user profile data
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("trl_level, location, funding_needs")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Parse funding_needs to integer
+      const askAmount = profile?.funding_needs 
+        ? parseInt(profile.funding_needs.replace(/[^0-9]/g, '')) 
+        : 0;
+
       // @ts-ignore - RPC function match_grants is defined in database but not yet in types
       const { data, error } = await supabase.rpc('match_grants', {
-        user_trl: 4,
-        user_country: 'Germany',
-        user_ask_amount: 50000
+        user_trl: profile?.trl_level || 1,
+        user_country: profile?.location || 'Germany',
+        user_ask_amount: askAmount
       });
 
       if (error) throw error;
