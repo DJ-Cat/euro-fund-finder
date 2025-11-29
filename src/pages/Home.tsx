@@ -1,27 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import MissionManifesto from "@/components/MissionManifesto";
 
 const Home = () => {
   const navigate = useNavigate();
-
-  const steps = [
-    {
-      number: "01",
-      title: "Profile",
-      description: "Enter your startup details and funding requirements",
-    },
-    {
-      number: "02",
-      title: "Match",
-      description: "Our algorithm identifies the best-fit investors for you",
-    },
-    {
-      number: "03",
-      title: "Apply",
-      description: "Connect directly with matched investors and submit applications",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,21 +68,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="bg-secondary border-y-2 border-foreground py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-5xl font-black mb-16 text-center tracking-tight">HOW IT WORKS</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map((step, index) => (
-              <div key={index} className="border-2 border-foreground bg-background p-8">
-                <div className="text-6xl font-black mb-4 text-primary">{step.number}</div>
-                <h3 className="text-2xl font-black mb-3 tracking-tight">{step.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Mission & Public Funding Manifesto */}
+      <MissionManifesto />
 
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-6 py-24">
