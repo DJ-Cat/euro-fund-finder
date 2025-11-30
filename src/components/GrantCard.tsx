@@ -17,6 +17,9 @@ interface GrantCardProps {
     deadline: string | null;
     tags: string[] | null;
     application_url: string | null;
+    eligible_countries?: string[] | null;
+    min_trl?: number | null;
+    max_trl?: number | null;
   };
 }
 
@@ -68,6 +71,12 @@ const GrantCard = ({ grant }: GrantCardProps) => {
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {grant.description && (
+          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+            {grant.description}
+          </p>
+        )}
+
         <div className="flex items-center gap-2 text-lg font-bold">
           💰 {formatAmount(grant.amount_min, grant.amount_max)}
         </div>
@@ -78,18 +87,12 @@ const GrantCard = ({ grant }: GrantCardProps) => {
 
         {grant.tags && grant.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {grant.tags.map((tag, index) => (
+            {grant.tags.slice(0, 4).map((tag, index) => (
               <Badge key={index} variant="secondary" className="font-semibold">
                 {tag}
               </Badge>
             ))}
           </div>
-        )}
-
-        {grant.description && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {grant.description}
-          </p>
         )}
       </CardContent>
 
