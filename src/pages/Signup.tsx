@@ -12,7 +12,7 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const redirectPath = searchParams.get("redirect") || "/onboarding";
+  const redirectPath = searchParams.get("return_to") || "/onboarding";
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
