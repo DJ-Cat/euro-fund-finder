@@ -45,9 +45,9 @@ const GrantCard = ({ grant, matchScore }: GrantCardProps) => {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      // Redirect to signup with current path as redirect param
+      // Redirect to signup with current path as return_to param
       const currentPath = window.location.pathname;
-      navigate(`/signup?redirect=${encodeURIComponent(currentPath)}`);
+      navigate(`/signup?return_to=${encodeURIComponent(currentPath)}`);
       toast.info("Please sign up to apply for grants");
       return;
     }

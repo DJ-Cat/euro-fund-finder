@@ -88,7 +88,6 @@ const Explore = () => {
 
       if (error) throw error;
       setGrants(data || []);
-      setFilteredGrants(data || []);
     } catch (error: any) {
       toast.error("Failed to load grants");
       console.error(error);
@@ -128,7 +127,7 @@ const Explore = () => {
       );
     }
 
-    // Industry filter
+    // Industry filter (using tags array)
     if (industryFilter !== "all") {
       filtered = filtered.filter(
         (grant) =>
@@ -136,7 +135,7 @@ const Explore = () => {
       );
     }
 
-    // Funding Type filter
+    // Funding Type filter (using tags array)
     if (fundingTypeFilter !== "all") {
       filtered = filtered.filter(
         (grant) =>
