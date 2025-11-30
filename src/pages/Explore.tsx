@@ -47,6 +47,8 @@ const Explore = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [countryFilter, setCountryFilter] = useState("all");
   const [trlFilter, setTrlFilter] = useState("all");
+  const [industryFilter, setIndustryFilter] = useState("all");
+  const [fundingTypeFilter, setFundingTypeFilter] = useState("all");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
@@ -57,7 +59,7 @@ const Explore = () => {
 
   useEffect(() => {
     filterGrants();
-  }, [searchQuery, countryFilter, trlFilter, grants]);
+  }, [searchQuery, countryFilter, trlFilter, industryFilter, fundingTypeFilter, grants]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -90,7 +92,8 @@ const Explore = () => {
       filtered = filtered.filter(
         (grant) =>
           grant.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          grant.description?.toLowerCase().includes(searchQuery.toLowerCase())
+          grant.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          grant.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -109,6 +112,22 @@ const Explore = () => {
         (grant) =>
           (grant.min_trl === null || grant.min_trl <= trlValue) &&
           (grant.max_trl === null || grant.max_trl >= trlValue)
+      );
+    }
+
+    // Industry filter
+    if (industryFilter !== "all") {
+      filtered = filtered.filter(
+        (grant) =>
+          grant.tags?.some(tag => tag.toLowerCase().includes(industryFilter.toLowerCase()))
+      );
+    }
+
+    // Funding Type filter
+    if (fundingTypeFilter !== "all") {
+      filtered = filtered.filter(
+        (grant) =>
+          grant.tags?.some(tag => tag.toLowerCase().includes(fundingTypeFilter.toLowerCase()))
       );
     }
 
@@ -194,12 +213,51 @@ const Explore = () => {
             <div className="flex-1 min-w-[300px] relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search by title or description..."
+                placeholder="Search grants by keywords..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 border-2 border-foreground h-12 font-semibold"
               />
             </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="border-2 border-foreground font-semibold h-12">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Industry: {industryFilter === "all" ? "All" : industryFilter}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 border-2 border-foreground">
+                <DropdownMenuLabel className="font-bold">Filter by Industry</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={industryFilter} onValueChange={setIndustryFilter}>
+                  <DropdownMenuRadioItem value="all">All Industries</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Fintech">Fintech</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Health">Health</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="SaaS">SaaS</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Cleantech">Cleantech</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="border-2 border-foreground font-semibold h-12">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Type: {fundingTypeFilter === "all" ? "All" : fundingTypeFilter}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 border-2 border-foreground">
+                <DropdownMenuLabel className="font-bold">Filter by Funding Type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={fundingTypeFilter} onValueChange={setFundingTypeFilter}>
+                  <DropdownMenuRadioItem value="all">All Types</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Grant">Grant</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Loan">Loan</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Equity">Equity</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -217,25 +275,6 @@ const Explore = () => {
                   <DropdownMenuRadioItem value="France">France</DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="Spain">Spain</DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="Italy">Italy</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="border-2 border-foreground font-semibold h-12">
-                  <Filter className="mr-2 h-4 w-4" />
-                  TRL: {trlFilter === "all" ? "All" : trlFilter}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 border-2 border-foreground">
-                <DropdownMenuLabel className="font-bold">Filter by TRL Level</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup value={trlFilter} onValueChange={setTrlFilter}>
-                  <DropdownMenuRadioItem value="all">All Levels</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="1">TRL 1-3</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="4">TRL 4-6</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="7">TRL 7-9</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
