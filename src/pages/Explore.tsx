@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import GrantCard from "@/components/GrantCard";
-import { Search, Filter, Upload } from "lucide-react";
+import { Search, Filter, Upload, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +40,7 @@ interface Grant {
   eligible_countries: string[] | null;
   min_trl: number | null;
   max_trl: number | null;
+  similarity?: number;
 }
 
 const Explore = () => {
@@ -51,6 +55,15 @@ const Explore = () => {
   const [fundingTypeFilter, setFundingTypeFilter] = useState("all");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  
+  // AI Search State
+  const [aiSearchMode, setAiSearchMode] = useState(false);
+  const [startupDescription, setStartupDescription] = useState("");
+  const [aiSearching, setAiSearching] = useState(false);
+  const [demoMode, setDemoMode] = useState(true);
+  
+  // Temporary OpenAI key placeholder (user will fill this in)
+  const OPENAI_KEY = "";
 
   useEffect(() => {
     checkAuth();
@@ -142,6 +155,79 @@ const Explore = () => {
     }
   };
 
+  const handleAISearch = async () => {
+    if (!startupDescription.trim()) {
+      toast.error("Please describe your startup first");
+      return;
+    }
+
+    setAiSearching(true);
+
+    try {
+      // Check if we're in demo mode or missing OpenAI key
+      if (demoMode || !OPENAI_KEY) {
+        if (!demoMode && !OPENAI_KEY) {
+          toast.info("No OpenAI key found. Running in demo mode.");
+        }
+        
+        // Demo mode: just fetch all grants
+        const { data, error } = await supabase
+          .from("public_grants")
+          .select("*")
+          .order("deadline", { ascending: true, nullsFirst: false })
+          .limit(10);
+
+        if (error) throw error;
+        setFilteredGrants(data || []);
+        toast.success("Showing all grants (Demo Mode)");
+        return;
+      }
+
+      // Step 1: Call OpenAI Embeddings API
+      const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENAI_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "text-embedding-3-small",
+          input: startupDescription,
+        }),
+      });
+
+      if (!embeddingResponse.ok) {
+        const errorText = await embeddingResponse.text();
+        console.error("OpenAI API error:", errorText);
+        throw new Error("Failed to generate embeddings from OpenAI");
+      }
+
+      const embeddingData = await embeddingResponse.json();
+      const embedding = embeddingData.data[0].embedding;
+
+      // Step 2: Call Supabase RPC function
+      const { data, error } = (await (supabase as any).rpc("match_grants_ai", {
+        query_embedding: embedding,
+        match_threshold: 0.5,
+        match_count: 10,
+      })) as { data: Grant[] | null; error: any };
+
+      if (error) {
+        console.error("Supabase RPC error:", error);
+        throw error;
+      }
+
+      const results = data || [];
+      setFilteredGrants(results);
+      toast.success(`Found ${results.length} matching grants`);
+    } catch (error: any) {
+      console.error("AI Search error:", error);
+      toast.error("AI search failed. Please try again or enable demo mode.");
+    } finally {
+      setAiSearching(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -203,22 +289,78 @@ const Explore = () => {
       {/* Header Section */}
       <div className="border-b-2 border-foreground bg-secondary">
         <div className="max-w-7xl mx-auto px-6 py-12">
-          <h1 className="text-5xl font-black mb-4 tracking-tight">Grant Explorer</h1>
-          <p className="text-xl text-muted-foreground font-semibold mb-8">
-            Browse all available European grants and funding opportunities
-          </p>
-
-          {/* Search and Filter Bar */}
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-[300px] relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search grants by keywords..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 border-2 border-foreground h-12 font-semibold"
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-5xl font-black tracking-tight">Grant Explorer</h1>
+            <div className="flex items-center gap-3">
+              <Label htmlFor="ai-mode" className="font-bold">AI Search</Label>
+              <Switch
+                id="ai-mode"
+                checked={aiSearchMode}
+                onCheckedChange={setAiSearchMode}
               />
             </div>
+          </div>
+          <p className="text-xl text-muted-foreground font-semibold mb-8">
+            {aiSearchMode 
+              ? "Use AI to find grants that match your startup"
+              : "Browse all available European grants and funding opportunities"
+            }
+          </p>
+
+          {aiSearchMode ? (
+            // AI Search Mode
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <Label htmlFor="demo-mode" className="font-semibold text-sm">Demo Mode</Label>
+                <Switch
+                  id="demo-mode"
+                  checked={demoMode}
+                  onCheckedChange={setDemoMode}
+                />
+                {demoMode && (
+                  <span className="text-xs text-muted-foreground">
+                    (Using demo data - no OpenAI key required)
+                  </span>
+                )}
+              </div>
+              
+              <Textarea
+                placeholder="Describe your startup (e.g., 'We build solar-powered drones for precision agriculture in Europe')..."
+                value={startupDescription}
+                onChange={(e) => setStartupDescription(e.target.value)}
+                className="min-h-[120px] border-2 border-foreground font-semibold resize-none"
+              />
+              
+              <Button
+                onClick={handleAISearch}
+                disabled={aiSearching || !startupDescription.trim()}
+                className="w-full h-14 text-lg font-black"
+              >
+                {aiSearching ? (
+                  <>
+                    <Sparkles className="mr-2 h-5 w-5 animate-spin" />
+                    Searching with AI...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Find Matching Grants
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            // Traditional Search and Filter Bar
+            <div className="flex gap-4 flex-wrap">
+              <div className="flex-1 min-w-[300px] relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Search grants by keywords..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 border-2 border-foreground h-12 font-semibold"
+                />
+              </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -278,7 +420,8 @@ const Explore = () => {
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -302,7 +445,11 @@ const Explore = () => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredGrants.map((grant) => (
-                <GrantCard key={grant.id} grant={grant} />
+                <GrantCard 
+                  key={grant.id} 
+                  grant={grant}
+                  matchScore={grant.similarity ? Math.round(grant.similarity * 100) : undefined}
+                />
               ))}
             </div>
           </>

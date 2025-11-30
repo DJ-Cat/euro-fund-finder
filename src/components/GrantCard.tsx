@@ -21,9 +21,10 @@ interface GrantCardProps {
     min_trl?: number | null;
     max_trl?: number | null;
   };
+  matchScore?: number;
 }
 
-const GrantCard = ({ grant }: GrantCardProps) => {
+const GrantCard = ({ grant, matchScore }: GrantCardProps) => {
   const navigate = useNavigate();
 
   const formatAmount = (min: number | null, max: number | null) => {
@@ -64,6 +65,11 @@ const GrantCard = ({ grant }: GrantCardProps) => {
       <CardHeader>
         <div className="flex items-start justify-between mb-2">
           <CardTitle className="text-2xl font-black tracking-tight">{grant.title}</CardTitle>
+          {matchScore !== undefined && (
+            <Badge variant="default" className="ml-2 font-black text-sm">
+              {matchScore}% Fit
+            </Badge>
+          )}
         </div>
         <CardDescription className="font-semibold text-base">
           {grant.funding_body || "Public Grant"}
